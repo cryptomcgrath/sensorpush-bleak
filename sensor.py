@@ -14,7 +14,7 @@ HND_REVISION_CODE = "0x0010"
 HND_DEVICE_ID = "0x000e"
 HND_BULK_READ = "0x001c"
 HND_ADV_INTERVAL = "0x0016"
-HND_WRITE_NOTIFY = "0x001e"
+HND_MODE = "0x001f"
 
 RESPONSE_WRITE_SUCCESS = "Characteristic value was written successfully\r\n"
 RESPONSE_READ_SUCCESS = "Characteristic value/descriptor: "
@@ -51,10 +51,11 @@ def read_batt_info():
 
 def write_timestamp(hex_str):
   write_req(HND_TIMESTAMP, hex_str)
-  return
+  return ut.hexStrToInt(hex_str)
 
 def read_timestamp():
-  return read_hnd(HND_TIMESTAMP)
+  hex_str = read_hnd(HND_TIMESTAMP)
+  return ut.hexStrToInt(hex_str)
 
 def read_device_id():
   hex_str = read_hnd(HND_DEVICE_ID)
@@ -76,4 +77,32 @@ def read_sample_interval():
   hex_str = read_hnd(HND_SAMPLE_INTERVAL)
   return ut.hexStrToInt(hex_str)
 
+def read_bulk_values(timestamp_hex_str, callback_fun):
+  write_req(HND_MODE, "0100")
+  print("starting bulk read from "+timestamp_hex_str)
+  write_req(HND_BULK_READ, timestamp_hex_str)
+
+  found_stop = False
+  while found_stop == False:
+    try:
+      child.expect("Notification handle = 0x001e value: ", timeout=10)
+    except:
+      print("no more data to read")
+      break
+    child.expect("\r\n")
+    values = child.before.decode().replace(" ","")
+    print("values = "+values)
+
+    if len(values) < 16:
+      print("No temp avail")
+      break
+
+    if values[0:8] == "ffffffff":
+      print("stop token")
+      found_stop = True
+      break
+
+    sample_time = ut.hexStrToInt(values[0:8])
+    samples = ut.hexStrToSamples(values[8:])
+    callback_fun(sample_time, samples, ut.hexStrToBytes(values))
 

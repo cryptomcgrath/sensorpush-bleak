@@ -9,6 +9,10 @@ def hexStrToInt(hexstr):
   val = int.from_bytes(bs, byteorder='little')
   return val
 
+def hexStrToBytes(hexstr):
+  hexstr = hexstr.replace(" ","")
+  return bytearray.fromhex(hexstr)
+
 def intToHexStr(i):
   return (i).to_bytes(4, byteorder='little').hex()
 
@@ -23,3 +27,5 @@ def intToTimeStr(i):
   tz = pytz.timezone('America/Montreal')
   return d.astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
 
+def celsiusToFahrenheit(c):
+  return c * 1.8 + 32.0
