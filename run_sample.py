@@ -21,6 +21,7 @@ last_time = sensor.read_timestamp()
 print("Last timestamp: {}".format(ut.intToTimeStr(last_time)))
 
 def notify_data(sample_time, samples, rawbytes):
+  degree_sign = u"\N{DEGREE SIGN}"
   stamp=ut.intToTimeStr(sample_time)
 
   for j in range(0,len(samples)):
@@ -32,8 +33,9 @@ def notify_data(sample_time, samples, rawbytes):
     sample_bytes = bytearray([65])+sample_bytes
     vals = sensorpush.decode_values(sample_bytes, 65)
     temp_c = vals["temperature"]
+    temp_f = ut.celsiusToFahrenheit(temp_c)
     hum = vals["humidity"]
-    print("{:>20},{},{:>7.3f} {:>7.3f}".format(s, samples[j], temp_c, hum))
+    print("{:>20},{},temp: {:>7.3f}{}f ({:>7.3f}{}c) hum: {:>7.3f}%".format(s, samples[j], temp_f, degree_sign, temp_c, degree_sign, hum))
 
 read_start_time_hex = ut.intToHexStr(last_time-(60*30))
 sensor.read_bulk_values(read_start_time_hex, notify_data)
