@@ -1,3 +1,4 @@
+# This file is copied from https://github.com/Ernst79/bleparser/blob/c42ae922e1abed2720c7fac993777e1bd59c0c93/package/bleparser/sensorpush.py
 # Parser for SensorPush BLE advertisements
 import logging
 from struct import unpack
