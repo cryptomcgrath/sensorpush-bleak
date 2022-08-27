@@ -7,6 +7,7 @@ import utils as ut
 #
 DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
 
+# bluetooth characteristic handles
 HND_BATT_INFO = "0x0018"
 HND_TIMESTAMP = "0x1a"
 HND_SAMPLE_INTERVAL = "0x0014"
@@ -18,17 +19,29 @@ HND_MODE = "0x001f"
 
 RESPONSE_WRITE_SUCCESS = "Characteristic value was written successfully\r\n"
 RESPONSE_READ_SUCCESS = "Characteristic value/descriptor: "
+RESPONSE_STOP_TOKEN = "ffffffff"
 
 TIMEOUT=10
 
 child=pexpect.spawn("gatttool -I")
 
+#
+# connects to the device specified by addr
+#
+# addr : str 
+#     The mac address of the device to connect to as a string in the format A1:B2:C3:D4:E5:F6
+#
 def connect(addr = DEFAULT_SENSOR_ADDR):
   print("Connecting to "+addr+"..."),
   child.sendline("connect {0}".format(addr))
-  child.expect("Connection successful", timeout=10)
+  child.expect("Connection successful", timeout=TIMEOUT)
   return
 
+# read bluetooth characteristic handle
+# 
+# hnd : str
+#     The handle to read (see the list of bluetooth characteristic handles above
+#
 def read_hnd(hnd):
   child.sendline("char-read-hnd "+hnd)
   child.expect(RESPONSE_READ_SUCCESS, timeout=TIMEOUT)
@@ -36,11 +49,17 @@ def read_hnd(hnd):
   hex_str = child.before.decode().replace(" ","")
   return hex_str
 
+# write bluetooh characteristic handle
+#
+# hnd : str
+#    The handle to write to (see the list of bluetooth characteristic handles above)
+#
 def write_req(hnd, val):
   child.sendline("char-write-req "+hnd+" "+val)
   child.expect(RESPONSE_WRITE_SUCCESS, timeout=TIMEOUT)
   return
 
+# reads the battery info and returns volts, rawTemp
 def read_batt_info():
   hexStr = read_hnd(HND_BATT_INFO)
   voltHex = hexStr[0:4]
@@ -73,10 +92,30 @@ def read_revision_code():
   rev_str = "{:0>3}_{:0>3}.{:0>3}_{:0>3}.{:0>3}_{:0>3}.{:0>3}".format(i1, i2, i3, i4, i5, i6, i7)
   return rev_str
 
+#
+# returns the sample interval (int) in seconds
+# 
 def read_sample_interval():
   hex_str = read_hnd(HND_SAMPLE_INTERVAL)
   return ut.hexStrToInt(hex_str)
 
+
+#
+# reads the bulk values from the given timestamp_hex_str
+# executes the callback_fun for each line of bulk values read
+#
+# callback_fun(sample_time_int, samples_hexstr_array, raw_bytes)
+#      sample_time_int : int
+#           The start time for this line of data.  The first sample
+#      in samples_hexstr_array is this at this time and each sample after is taken
+#      using the sample interval that is set
+#
+#      samples_hexstr_arary : str[]
+#          array of hex strings, each hex string is 8 in length  
+#
+#      raw_bytes : byte[]
+#          Byte array containing the raw data returned
+#
 def read_bulk_values(timestamp_hex_str, callback_fun):
   write_req(HND_MODE, "0100")
   print("starting bulk read from "+timestamp_hex_str)
@@ -97,7 +136,7 @@ def read_bulk_values(timestamp_hex_str, callback_fun):
       print("No temp avail")
       break
 
-    if values[0:8] == "ffffffff":
+    if values[0:8] == RESPONSE_STOP_TOKEN:
       print("stop token")
       found_stop = True
       break
