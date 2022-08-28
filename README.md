@@ -8,14 +8,14 @@ see https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/<br>
 
 2. Use hcitool to find your Sensorpush mac address:<br>
 ```
-pi@raspberrypi:~ $ sudo hcitool lescan<br>
-LE Scan ...<br>
-A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8<br>
+pi@raspberrypi:~ $ sudo hcitool lescan
+LE Scan ...
+A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8
 ```
 
 3. Edit sensor.py, change this line<br>
 ```
-DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"<br>
+DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
 ```
 to use your own device's mac address that you found using hcitool above<br>
 
