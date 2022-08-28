@@ -36,7 +36,11 @@ def read_bulk_values_callback(sample_time, samples, rawbytes):
     s=""
     if j==0:
       s = stamp
-    sample_bytes = ut.hexStrToBytes(samples[j][0:8])
+    sample_hex = samples[j][0:8]
+    if sample_hex == sensor.STOP_TOKEN:
+        print("stop token")
+        break
+    sample_bytes = ut.hexStrToBytes(sample_hex)
     ## add dummy byte to beginning
     sample_bytes = bytearray([65])+sample_bytes
     vals = sensorpush.decode_values(sample_bytes, 65)

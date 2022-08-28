@@ -19,7 +19,7 @@ HND_MODE = "0x001f"
 
 RESPONSE_WRITE_SUCCESS = "Characteristic value was written successfully\r\n"
 RESPONSE_READ_SUCCESS = "Characteristic value/descriptor: "
-RESPONSE_STOP_TOKEN = "ffffffff"
+STOP_TOKEN = "ffffffff"
 
 TIMEOUT=10
 
@@ -136,12 +136,15 @@ def read_bulk_values(timestamp_hex_str, callback_fun):
       print("No temp avail")
       break
 
-    if values[0:8] == RESPONSE_STOP_TOKEN:
-      print("stop token")
-      found_stop = True
-      break
-
-    sample_time = ut.hexStrToInt(values[0:8])
+    sample_time_hexstr = values[0:8]
+    sample_time = ut.hexStrToInt(sample_time_hexstr)
+    if sample_time_hexstr == STOP_TOKEN:
+        found_stop = True
+        break
     samples = ut.hexStrToSamples(values[8:])
+    for sample in samples:
+        if sample == STOP_TOKEN:
+            found_stop = True
+
     callback_fun(sample_time, samples, ut.hexStrToBytes(values))
 
