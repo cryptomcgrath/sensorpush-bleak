@@ -2,6 +2,13 @@ import sensor
 import utils as ut
 import numpy
 import sensorpush
+from datetime import datetime
+
+
+epoch = datetime.utcfromtimestamp(0)
+
+def unix_time_seconds(dt):
+    return int((dt - epoch).total_seconds())
 
 # either supply the mac addr of your sensor 
 # as a parameter to connect here 
@@ -51,7 +58,11 @@ def read_bulk_values_callback(sample_time, samples, rawbytes):
 
 
 # we will be using a start time of 30 minutes prior to the last_time
-read_start_time_hex = ut.intToHexStr(last_time-(6030))
+current_time = unix_time_seconds(datetime.now())
+print("current time {}".format(current_time))
+print("last time {}".format(last_time))
+exit
+read_start_time_hex = ut.intToHexStr(last_time-120)
 
 #
 # here we read bulk values using the callback function above

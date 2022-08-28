@@ -134,13 +134,16 @@ def read_bulk_values(timestamp_hex_str, callback_fun):
 
     if len(values) < 16:
       print("No temp avail")
+      found_stop = True
       break
 
     sample_time_hexstr = values[0:8]
     sample_time = ut.hexStrToInt(sample_time_hexstr)
     if sample_time_hexstr == STOP_TOKEN:
+        sample_time = 0
         found_stop = True
-        break
+    else:
+        sample_time = ut.hexStrToInt(sample_time_hexstr)
     samples = ut.hexStrToSamples(values[8:])
     for sample in samples:
         if sample == STOP_TOKEN:
