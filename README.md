@@ -4,16 +4,19 @@ Uses python and gatttool to read temperature data from a Sensorpush HT.w tempera
 
 Requires:
 
-Raspberry Pi
-bluez-5.62 (download, configure, make, install install onto your PI device -- see https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/)
+<dl>
+<dt>Raspberry Pi</dt>
+<dt>bluez-5.62 (download, configure, make, install install onto your PI device)</dt>
+<dd>see https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/</dd>
+</dl>
 
 Use hcitool to find your Sensorpush mac address:
 
 pi@raspberrypi:~ $ sudo hcitool lescan
 LE Scan ...
-A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8
+<mark>A4:34:F1:7F:CD:D8</mark> SensorPush HT.w CDD8
 
-Edit sensor.py, change the line
+Edit sensor.py, change this line
 DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
 to use your own device's mac address that you found using hcitool above
 
