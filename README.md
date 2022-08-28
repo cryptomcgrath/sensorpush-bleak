@@ -8,6 +8,7 @@ Raspberry Pi
 bluez-5.62 (download, configure, make, install install onto your PI device -- see https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/)
 
 Use hcitool to find your Sensorpush mac address:
+
 pi@raspberrypi:~ $ sudo hcitool lescan
 LE Scan ...
 A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8
