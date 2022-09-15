@@ -1,0 +1,28 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build meta"
+
+[project]
+name = "pysensorpush"
+version = "1.0.0"
+description = "library to read from Sensorpush HW.t bluetooth sensor"
+readme = "README.md"
+authors = [{name = "Ed McGrath", email = "edward@edwardmcgrath.com" }]
+license = { file = "LICENSE" }
+classifierss = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["sensorpush", "HW.t", "temperature", "sensor", "bluetooth", "ble"]
+dependencies = [
+    "pexpect>=4.8.0",
+]
+requires-python = ">=3.9"
+
+[project-urls]
+Homepage = "https://github.com/cryptomcgrath/pysensorpush"
+
+
