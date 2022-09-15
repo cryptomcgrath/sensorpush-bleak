@@ -29,3 +29,11 @@ def intToTimeStr(i):
 
 def celsiusToFahrenheit(c):
   return c * 1.8 + 32.0
+
+epoch = datetime.utcfromtimestamp(0)
+
+def unix_time_seconds(dt):
+    return int((dt - epoch).total_seconds())
+
+def currentTimeInt():
+    return unix_time_seconds(datetime.now())
