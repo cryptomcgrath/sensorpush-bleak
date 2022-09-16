@@ -1,6 +1,6 @@
 import pexpect
-import utils as ut
-import sensorpush_parser
+from pysensorpush import utils as ut
+from pysensorpush import sensorpush_parser
 import sys
 import asyncio
 
