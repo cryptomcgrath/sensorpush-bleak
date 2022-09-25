@@ -15,7 +15,7 @@ DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
 ```
 to use your own device's mac address that you found using hcitool above<br>
 
-3. There is a demo in ```__main__.py``` which exercices some of the api in sensorpush.py
+3. There is a demo() in ```__main__.py``` which exercices some of the api in sensorpush.py
 
 4. To read the current temperature:
 ```
