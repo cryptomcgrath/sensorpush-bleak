@@ -28,8 +28,18 @@ Connecting to A4:34:F1:7F:CD:D8...
 >>> volts, rawTemp = sensorpush.read_batt_info()
 >>> print(volts, rawTemp)
 3.156 16
->>> 
-
+>>> ts = sensorpush.read_timestamp()
+>>> print (ts)
+1915
+>>> did = sensorpush.read_device_id()
+>>> print(did)
+16816765
+>>> rev = sensorpush.read_revision_code()
+>>> print(rev)
+001_000.001_030.003_000.002
+>>> si = sensorpush.read_sample_interval()
+>>> print(si)
+60
 ```
 
 ![pysensorpush_pic](https://user-images.githubusercontent.com/5443337/143657088-2a6d5793-24d3-4408-9d07-30b3f3f04577.jpg)
