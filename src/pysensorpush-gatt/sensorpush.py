@@ -20,83 +20,33 @@ HND_BULK_READ = "0x001c"
 HND_ADV_INTERVAL = "0x0016"
 HND_MODE = "0x001f"
 
-RESPONSE_WRITE_SUCCESS = "Characteristic value was written successfully\r\n"
-RESPONSE_READ_SUCCESS = "Characteristic value/descriptor: "
-STOP_TOKEN = "ffffffff"
-
-TIMEOUT=10
-
-child=pexpect.spawn("gatttool -I")
-
-#
-# connects to the device specified by addr
-#
-# addr : str 
-#     The mac address of the device to connect to as a string in the format A1:B2:C3:D4:E5:F6
-#
-def connect(addr = DEFAULT_SENSOR_ADDR):
-  print("Connecting to "+addr+"..."),
-  try:
-      child.sendline("connect {0}".format(addr))
-      child.expect("Connection successful", timeout=TIMEOUT)
-  except:
-      print("connect error", sys.exc_info()[0])
-  return
-
-# read bluetooth characteristic handle
-# 
-# hnd : str
-#     The handle to read (see the list of bluetooth characteristic handles above
-#
-def read_hnd(hnd):
-  try:
-      child.sendline("char-read-hnd "+hnd)
-      child.expect(RESPONSE_READ_SUCCESS, timeout=TIMEOUT)
-      child.expect("\r\n", timeout=TIMEOUT)
-      hex_str = child.before.decode().replace(" ","")
-      return hex_str
-  except:
-      print("connect error", sys.exc_info()[0])
-      return ""
-
-# write bluetooh characteristic handle
-#
-# hnd : str
-#    The handle to write to (see the list of bluetooth characteristic handles above)
-#
-def write_req(hnd, val):
-  try:
-      child.sendline("char-write-req "+hnd+" "+val)
-      child.expect(RESPONSE_WRITE_SUCCESS, timeout=TIMEOUT)
-      return True
-  except:
-      return False
-
-# reads the battery info and returns volts, rawTemp
-def read_batt_info():
-  hexStr = read_hnd(HND_BATT_INFO)
+def read_batt_info(device):
+  """
+  Reads the battery info and returns volts, rawTemp
+  """
+  hexStr = device.read_hnd(HND_BATT_INFO)
   voltHex = hexStr[0:4]
   tempHex = hexStr[4:8]
   volts = ut.hexStrToInt(voltHex) / 1000
   rawTemp = ut.hexStrToInt(tempHex)
   return volts, rawTemp
 
-def write_timestamp(hex_str):
-  write_req(HND_TIMESTAMP, hex_str)
+def write_timestamp(device, hex_str):
+  device.write_req(HND_TIMESTAMP, hex_str)
   return ut.hexStrToInt(hex_str)
 
-def read_timestamp():
-  hex_str = read_hnd(HND_TIMESTAMP)
+def read_timestamp(device):
+  hex_str = device.read_hnd(HND_TIMESTAMP)
   if hex_str == "":
       return 0
   return ut.hexStrToInt(hex_str)
 
-def read_device_id():
-  hex_str = read_hnd(HND_DEVICE_ID)
+def read_device_id(device):
+  hex_str = device.read_hnd(HND_DEVICE_ID)
   return ut.hexStrToInt(hex_str)
 
-def read_revision_code():
-  hex_str = read_hnd(HND_REVISION_CODE)
+def read_revision_code(device):
+  hex_str = device.read_hnd(HND_REVISION_CODE)
   i1 = ut.hexStrToInt(hex_str[0:2])
   i2 = ut.hexStrToInt(hex_str[2:4])
   i3 = ut.hexStrToInt(hex_str[4:6])
@@ -110,8 +60,8 @@ def read_revision_code():
 #
 # returns the sample interval (int) in seconds
 # 
-def read_sample_interval():
-  hex_str = read_hnd(HND_SAMPLE_INTERVAL)
+def read_sample_interval(device):
+  hex_str = device.read_hnd(HND_SAMPLE_INTERVAL)
   return ut.hexStrToInt(hex_str)
 
 
