@@ -9,13 +9,7 @@ LE Scan ...
 A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8
 ```
 
-2. Edit sensorpush.py, change this line<br>
-```
-DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
-```
-to use your own device's mac address that you found using hcitool above<br>
-
-3. Example usage:
+2. Example usage:
 ```
 $ python3
 Python 3.9.2 (default, Mar 12 2021, 04:06:34)
@@ -23,7 +17,7 @@ Python 3.9.2 (default, Mar 12 2021, 04:06:34)
 Type "help", "copyright", "credits" or "license" for more information.
 
 >>> import sensorpush
->>> sensorpush.connect()
+>>> sensorpush.connect("A4:34:F1:7F:CD:D8")
 Connecting to A4:34:F1:7F:CD:D8...
 >>> volts, rawTemp = sensorpush.read_batt_info()
 >>> print(volts, rawTemp)
