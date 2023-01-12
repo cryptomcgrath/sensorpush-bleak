@@ -1,6 +1,6 @@
 import pexpect
-from pysensorpush import utils as ut
-from pysensorpush import sensorpush_parser
+import utils as ut
+import sensorpush_parser
 import sys
 import asyncio
 
@@ -65,9 +65,12 @@ def read_hnd(hnd):
 #    The handle to write to (see the list of bluetooth characteristic handles above)
 #
 def write_req(hnd, val):
-  child.sendline("char-write-req "+hnd+" "+val)
-  child.expect(RESPONSE_WRITE_SUCCESS, timeout=TIMEOUT)
-  return
+  try:
+      child.sendline("char-write-req "+hnd+" "+val)
+      child.expect(RESPONSE_WRITE_SUCCESS, timeout=TIMEOUT)
+      return True
+  except:
+      return False
 
 # reads the battery info and returns volts, rawTemp
 def read_batt_info():
@@ -163,16 +166,20 @@ def read_bulk_values(timestamp_hex_str, callback_fun):
 
     callback_fun(sample_time, samples, ut.hexStrToBytes(values))
 
-def read_temperature():
+def read_first_value():
   ts = read_timestamp()
   if ts == 0:
       return None
 
   timestamp_hex_str = ut.intToHexStr(ts-60)
 
-  write_req(HND_MODE, "0100")
+  success = write_req(HND_MODE, "0100")
+  if success == False:
+      return None
   print("starting bulk read from "+timestamp_hex_str)
-  write_req(HND_BULK_READ, timestamp_hex_str)
+  success = write_req(HND_BULK_READ, timestamp_hex_str)
+  if success == False:
+      return None
 
   found_stop = False
   while found_stop == False:

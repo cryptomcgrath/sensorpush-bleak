@@ -1,6 +1,7 @@
 import binascii
 from datetime import datetime
 import pytz
+import time
 
 # function to transform hex string like "0a cd" into signed integer
 def hexStrToInt(hexstr):
@@ -14,7 +15,11 @@ def hexStrToBytes(hexstr):
   return bytearray.fromhex(hexstr)
 
 def intToHexStr(i):
-  return (i).to_bytes(4, byteorder='little').hex()
+  try:
+      hexstr = (i).to_bytes(4, byteorder='little').hex()
+      return hexstr
+  except:
+      return ""
 
 def hexStrToSamples(hexStr):
   strarr = []
@@ -36,4 +41,5 @@ def unix_time_seconds(dt):
     return int((dt - epoch).total_seconds())
 
 def currentTimeInt():
-    return unix_time_seconds(datetime.now())
+    return int(time.time())
+#unix_time_seconds(datetime.now())
