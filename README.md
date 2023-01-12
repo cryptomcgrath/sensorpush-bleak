@@ -1,4 +1,4 @@
-# pysensorpush
+# pysensorpush-gatt
 
 Python library which uses gatttool to read temperature data from a Sensorpush HT.w temperature sensor.
 
