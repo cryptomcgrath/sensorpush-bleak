@@ -1,15 +1,15 @@
 # pysensorpush
 
-Simple python library which gatttool to read temperature data from a Sensorpush HT.w temperature sensor.
+Python library which uses gatttool to read temperature data from a Sensorpush HT.w temperature sensor.
 
-1. Use hcitool to find your Sensorpush mac address:<br>
+1. Find the mac address of your sensor:<br>
 ```
 pi@raspberrypi:~ $ sudo hcitool lescan
 LE Scan ...
 A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8
 ```
 
-2. Edit sensor.py, change this line<br>
+2. Edit sensorpush.py, change this line<br>
 ```
 DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
 ```
