@@ -1,5 +1,5 @@
-import utils as ut
-import sensorpush_parser
+from sensorpush import utils as ut
+from sensorpush import sensorpush_parser
 import asyncio
 
 STOP_TOKEN_B = b'\xff\xff\xff\xff'

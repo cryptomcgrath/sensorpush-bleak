@@ -2,24 +2,24 @@
 
 [build-system]
 requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build meta"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "pysensorpush-bleak"
-version = "1.0.0"
+version = "1.0.6"
 description = "library to read from Sensorpush HW.t bluetooth sensor"
 readme = "README.md"
 authors = [{name = "Ed McGrath", email = "edward@edwardmcgrath.com" }]
 license = { file = "LICENSE" }
-classifierss = [
+classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
 keywords = ["sensorpush", "HW.t", "temperature", "sensor", "bluetooth", "ble"]
 dependencies = [
-    "pexpect>=4.8.0",
     "bleak>=0.19.5",
+    "pytz>=2022.2.1",
 ]
 requires-python = ">=3.9"
 
