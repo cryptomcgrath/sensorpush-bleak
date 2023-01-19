@@ -11,11 +11,14 @@ A4:34:F1:7F:CD:D8 SensorPush HT.w CDD8
 
 2. Example usage:
 ```
-pi@raspberrypi:~/p/pysensorpush-bleak/src/pysensorpush-bleak $ python
+$ pip install sensorpush-bleak
+...
+Successfully installed sensorpush-bleak-1.0.7
+$ python
 Python 3.9.2 (default, Mar 12 2021, 04:06:34)
 [GCC 10.2.1 20210110] on linux
 Type "help", "copyright", "credits" or "license" for more information.
->>> import sensorpush as sp
+>>> from sensorpush import sensorpush as sp
 >>> import asyncio
 >>> from bleak import BleakClient
 >>> async def main():
