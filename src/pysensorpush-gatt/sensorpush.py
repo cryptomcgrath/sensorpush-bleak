@@ -1,14 +1,8 @@
-import pexpect
 import utils as ut
 import sensorpush_parser
 import sys
 import asyncio
-
-# change this to your sensor address
-# use hcitool to find it:
-#   sudo hcitool lescan
-#
-DEFAULT_SENSOR_ADDR="A4:34:F1:7F:CD:D8"
+import threading
 
 # bluetooth characteristic handles
 HND_BATT_INFO = "0x0018"
@@ -16,186 +10,198 @@ HND_TIMESTAMP = "0x1a"
 HND_SAMPLE_INTERVAL = "0x0014"
 HND_REVISION_CODE = "0x0010"
 HND_DEVICE_ID = "0x000e"
-HND_BULK_READ = "0x001c"
 HND_ADV_INTERVAL = "0x0016"
-HND_MODE = "0x001f"
 
-def read_batt_info(device):
+HND_BULK_READ_FROM = "0x001c"
+HND_BULK_READ = "0x001e"
+HND_BULK_READ_CTRL = "0x001f"
+
+STOP_TOKEN = "ffffffff"
+STOP_TOKEN_B = b'\xff\xff\xff\xff'
+
+# read returns bulk values bytes
+UUID_29="ef09000a-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 29): Unknown
+
+# read returns two bytes 0808 (int 2056)
+UUID_21="ef090005-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 21): Unknown
+
+UUID_REVISION="ef090002-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 15): Unknown
+UUID_DEVICE_ID="ef090001-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 13): Unknown
+UUID_BATT_INFO="ef090007-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 23): Unknown
+UUID_TIMESTAMP="ef090008-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 25): Unknown
+UUID_SAMPLE_INTERVAL="ef090004-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 19): Unknown
+UUID_TEMPERATURE="ef090080-11d6-42ba-93b8-9dd7ec090aa9" #(Handle: 38): Unknown
+UUID_HUMIDITY="ef090081-11d6-42ba-93b8-9dd7ec090aa9"
+
+# read returns single byte of 5
+UUID_17="ef090003-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 17): Unknown
+
+# read returns bulk values bytes
+UUID_27="ef090009-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 27): Unknown
+
+#ef09000b-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 32): Unknown
+#ef09000c-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 34): Unknown
+#ef09000d-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 36): Unknown
+#ef090081-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 40): Unknown
+#f000ffc5-0451-4000-b000-000000000000 (Handle: 49): Unknown
+#f000ffc2-0451-4000-b000-000000000000 (Handle: 46): Unknown
+#f000ffc1-0451-4000-b000-000000000000 (Handle: 43): Unknown
+
+class Sample:
+    ts_first = None
+    temp_c = None
+    hum = None
+
+    def __init__(self, ts_first, temp_c, hum):
+       self.ts_first = ts_first
+       self.temp_c = temp_c
+       self_hum = hum
+ 
+async def read_batt_info(client):
   """
   Reads the battery info and returns volts, rawTemp
+
+  Args:
+    client : The bleak client
+
+  Returns:
+    volts (float), rawTemp (float)
   """
-  hexStr = device.read_hnd(HND_BATT_INFO)
-  voltHex = hexStr[0:4]
-  tempHex = hexStr[4:8]
-  volts = ut.hexStrToInt(voltHex) / 1000
-  rawTemp = ut.hexStrToInt(tempHex)
+  bs = await client.read_gatt_char(UUID_BATT_INFO)
+  b_volts = bs[0:2]
+  b_temp = bs[2:4]
+  volts = ut.bytesToInt(b_volts) / 1000
+  rawTemp = ut.bytesToInt(b_temp)
   return volts, rawTemp
 
-def write_timestamp(device, hex_str):
-  device.write_req(HND_TIMESTAMP, hex_str)
-  return ut.hexStrToInt(hex_str)
+async def write_timestamp(client, ts_secs):
+  """
+  Writes the timestamp to the device
+  (sets the current time)
 
-def read_timestamp(device):
-  hex_str = device.read_hnd(HND_TIMESTAMP)
-  if hex_str == "":
-      return 0
-  return ut.hexStrToInt(hex_str)
+  Args:
+    client: The bleak client
+    ts_secs (int): The timestamp in seconds since epoch
+  """ 
+  ts_b = ut.intToBytes(ts_secs)
+  await client.write_gatt_char(UUID_TIMESTAMP, ts_b)
 
-def read_device_id(device):
-  hex_str = device.read_hnd(HND_DEVICE_ID)
-  return ut.hexStrToInt(hex_str)
+async def read_timestamp(client):
+  """
+  Reads the timestamp of the device
 
-def read_revision_code(device):
-  hex_str = device.read_hnd(HND_REVISION_CODE)
-  i1 = ut.hexStrToInt(hex_str[0:2])
-  i2 = ut.hexStrToInt(hex_str[2:4])
-  i3 = ut.hexStrToInt(hex_str[4:6])
-  i4 = ut.hexStrToInt(hex_str[6:8])
-  i5 = ut.hexStrToInt(hex_str[8:10])
-  i6 = ut.hexStrToInt(hex_str[10:12])
-  i7 = ut.hexStrToInt(hex_str[12:14])
+  Args:
+    client : The bleak client
+
+  Returns:
+    (int): timestamp in seconds since epoch
+  """
+  ts_b = await client.read_gatt_char(UUID_TIMESTAMP)
+  return ut.bytesToInt(ts_b)
+
+async def read_device_id(client):
+  """
+  Reads the device id of the device
+
+  Args:
+    client : The bleak client
+
+  Returns:
+    The device id as an int
+  """
+  device_b = await client.read_gatt_char(UUID_DEVICE_ID)
+  return ut.bytesToInt(device_b)
+
+async def read_revision_code(client):
+  """
+  Returns the device revision code string
+  
+  Args:
+    client : The bleak client
+
+  Returns:
+    The device revision code string
+  """
+  rev_b = await client.read_gatt_char(UUID_REVISION)
+  i1 = ut.bytesToInt(rev_b[0:1])
+  i2 = ut.bytesToInt(rev_b[1:2])
+  i3 = ut.bytesToInt(rev_b[2:3])
+  i4 = ut.bytesToInt(rev_b[3:4])
+  i5 = ut.bytesToInt(rev_b[4:5])
+  i6 = ut.bytesToInt(rev_b[5:6])
+  i7 = ut.bytesToInt(rev_b[6:7])
   rev_str = "{:0>3}_{:0>3}.{:0>3}_{:0>3}.{:0>3}_{:0>3}.{:0>3}".format(i1, i2, i3, i4, i5, i6, i7)
   return rev_str
 
-#
-# returns the sample interval (int) in seconds
-# 
-def read_sample_interval(device):
-  hex_str = device.read_hnd(HND_SAMPLE_INTERVAL)
-  return ut.hexStrToInt(hex_str)
+async def read_sample_interval(client):
+  """
+  Reads the sample interval in seconds
 
+  Args:
+    client : The bleak client
 
-#
-# reads the bulk values from the given timestamp_hex_str
-# executes the callback_fun for each line of bulk values read
-#
-# callback_fun(sample_time_int, samples_hexstr_array, raw_bytes)
-#      sample_time_int : int
-#           The start time for this line of data.  The first sample
-#      in samples_hexstr_array is this at this time and each sample after is taken
-#      using the sample interval that is set
-#
-#      samples_hexstr_arary : str[]
-#          array of hex strings, each hex string is 8 in length  
-#
-#      raw_bytes : byte[]
-#          Byte array containing the raw data returned
-#
-def read_bulk_values(timestamp_hex_str, callback_fun):
-  write_req(HND_MODE, "0100")
-  print("starting bulk read from "+timestamp_hex_str)
-  write_req(HND_BULK_READ, timestamp_hex_str)
+  Returns:
+    Sample interval in seconds (int)
+  """
+  sample_interval_b = await client.read_gatt_char(UUID_SAMPLE_INTERVAL)
+  return ut.bytesToInt(sample_interval_b)
 
-  found_stop = False
-  while found_stop == False:
-    try:
-      child.expect("Notification handle = 0x001e value: ", timeout=10)
-    except:
-      print("no more data to read")
-      break
-    child.expect("\r\n")
-    values = child.before.decode().replace(" ","")
-    print("values = "+values)
+async def read_temperature(client):
+    dummy_b = b'\x01\x00\x01\x00'
+    await client.write_gatt_char(UUID_TEMPERATURE, dummy_b)
+    await asyncio.sleep(.11)
+    temp_b = await client.read_gatt_char(UUID_TEMPERATURE)
+    temp = ut.bytesToInt(temp_b) / 100
+    return temp
 
-    if len(values) < 16:
-      print("No temp avail")
-      found_stop = True
-      break
+async def read_humidity(client):
+    dummy_b = b'\x01\x00\x01\x00'
+    await client.write_gatt_char(UUID_HUMIDITY, dummy_b)
+    await asyncio.sleep(.11)
+    hum_b = await client.read_gatt_char(UUID_HUMIDITY)
+    hum = ut.bytesToInt(hum_b) / 100
+    return hum
 
-    sample_time_hexstr = values[0:8]
-    sample_time = ut.hexStrToInt(sample_time_hexstr)
-    if sample_time_hexstr == STOP_TOKEN:
-        sample_time = 0
-        found_stop = True
-    else:
-        sample_time = ut.hexStrToInt(sample_time_hexstr)
-    samples = ut.hexStrToSamples(values[8:])
-    for sample in samples:
-        if sample == STOP_TOKEN:
-            found_stop = True
+def decode_values(values):
+    """
+    Decodes sensorpush notification values bytes
+    
+    Args:
+        values (bytearray): The values bytearray returned from the bulk read 
 
-    callback_fun(sample_time, samples, ut.hexStrToBytes(values))
+    Returns:
+        Sample[] or None
+    """
+    if len(values) < 8:
+        return None
 
-def read_first_value():
-  ts = read_timestamp()
-  if ts == 0:
-      return None
+    # This is the portion of the values containing the timestamp
+    sample_time_b = values[0:4]
+    if sample_time_b == STOP_TOKEN_B:
+        return None
 
-  timestamp_hex_str = ut.intToHexStr(ts-60)
+    sample_time_int = ut.bytesToInt(sample_time_b)
 
-  success = write_req(HND_MODE, "0100")
-  if success == False:
-      return None
-  print("starting bulk read from "+timestamp_hex_str)
-  success = write_req(HND_BULK_READ, timestamp_hex_str)
-  if success == False:
-      return None
+    ### This is the portion of the values containing the temp, humidity readings
+    sample_readings_b = values[4:]
 
-  found_stop = False
-  while found_stop == False:
-    try:
-      child.expect("Notification handle = 0x001e value: ", timeout=10)
-    except:
-      print("no more data to read")
-      break
-    child.expect("\r\n")
-    values = child.before.decode().replace(" ","")
-    print("values = "+values)
-
-    if len(values) < 16:
-      print("No temp avail")
-      found_stop = True
-      break
-
-    sample_time_hexstr = values[0:8]
-    sample_time = ut.hexStrToInt(sample_time_hexstr)
-    if sample_time_hexstr == STOP_TOKEN:
-        sample_time = 0
-        found_stop = True
-    else:
-        sample_time = ut.hexStrToInt(sample_time_hexstr)
-    samples = ut.hexStrToSamples(values[8:])
-    for sample in samples:
-        if sample == STOP_TOKEN:
-            found_stop = True
-
-    rev = samples[::-1]
-    for j in range(len(samples)-1, 0, -1):
+    ### chop the readings string into an array, each element is 4 bytes
+    samples = []
+    n_bytes = int(len(sample_readings_b) / 4) * 4
+    for i in range(0,n_bytes, 4):
+        samples.append(sample_readings_b[i:i+4])
+        
+    result = [] 
+    for j in range(len(samples)-1, -1, -1):
         sample = samples[j]
-        sample_hex = sample[0:8]
-        if sample_hex != STOP_TOKEN:
-            sample_bytes = ut.hexStrToBytes(sample_hex)
+        print("sample {} = {}".format(j, sample))
+        if sample != STOP_TOKEN_B:
             ## add dummy byte to beginning
-            sample_bytes = bytearray([65])+sample_bytes
+            sample_bytes = bytearray([65])
+            sample_bytes += samples[j]
             vals = sensorpush_parser.decode_values(sample_bytes, 65)
             temp_c = vals["temperature"]
-            temp_f = ut.celsiusToFahrenheit(temp_c)
-            print("read latest got temp {}".format(temp_f))
-            return temp_f
+            hum = vals["humidity"]
+            result.append(Sample(sample_time_int, temp_c, hum))
 
-    return None
-
-    
-def read_latest(callback_fun):
-    ts = read_timestamp()
-    
-    def bulk_cb(sample_time_int, samples, raw):
-        rev = samples[::-1]
-        for j in range(len(samples)-1, 0, -1):
-            sample = samples[j]
-            sample_hex = sample[0:8]
-            if sample_hex != STOP_TOKEN:
-                sample_bytes = ut.hexStrToBytes(sample_hex)
-                ## add dummy byte to beginning
-                sample_bytes = bytearray([65])+sample_bytes
-                vals = sensorpush_parser.decode_values(sample_bytes, 65)
-                temp_c = vals["temperature"]
-                temp_f = ut.celsiusToFahrenheit(temp_c)
-                print("read latest got temp {}".format(temp_f))
-                callback_fun(ts+60*j, temp_f)
-                break
-
-    read_start_time_hex = ut.intToHexStr(ts-60)
-    read_bulk_values(read_start_time_hex, bulk_cb)
-
-
+    return result
