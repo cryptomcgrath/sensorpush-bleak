@@ -23,6 +23,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 ...     await client.connect()
 ...     temp_c = await sp.read_temperature(client)
 ...     print("temperature = {}".format(temp_c))
+...     client.disconnect()
 ...
 >>> asyncio.run(main())
 temperature = 13.92
