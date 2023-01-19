@@ -1,29 +1,8 @@
 import utils as ut
 import sensorpush_parser
-import sys
 import asyncio
-import threading
 
-# bluetooth characteristic handles
-HND_BATT_INFO = "0x0018"
-HND_TIMESTAMP = "0x1a"
-HND_SAMPLE_INTERVAL = "0x0014"
-HND_REVISION_CODE = "0x0010"
-HND_DEVICE_ID = "0x000e"
-HND_ADV_INTERVAL = "0x0016"
-
-HND_BULK_READ_FROM = "0x001c"
-HND_BULK_READ = "0x001e"
-HND_BULK_READ_CTRL = "0x001f"
-
-STOP_TOKEN = "ffffffff"
 STOP_TOKEN_B = b'\xff\xff\xff\xff'
-
-# read returns bulk values bytes
-UUID_29="ef09000a-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 29): Unknown
-
-# read returns two bytes 0808 (int 2056)
-UUID_21="ef090005-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 21): Unknown
 
 UUID_REVISION="ef090002-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 15): Unknown
 UUID_DEVICE_ID="ef090001-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 13): Unknown
@@ -33,19 +12,23 @@ UUID_SAMPLE_INTERVAL="ef090004-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 19): Unkn
 UUID_TEMPERATURE="ef090080-11d6-42ba-93b8-9dd7ec090aa9" #(Handle: 38): Unknown
 UUID_HUMIDITY="ef090081-11d6-42ba-93b8-9dd7ec090aa9"
 
+#### UNKNOWN CHARACTERISTICS ####
 # read returns single byte of 5
 UUID_17="ef090003-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 17): Unknown
-
+# read returns two bytes 0808 (int 2056)
+UUID_21="ef090005-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 21): Unknown
 # read returns bulk values bytes
 UUID_27="ef090009-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 27): Unknown
+# read returns bulk values bytes
+UUID_29="ef09000a-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 29): Unknown
 
-#ef09000b-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 32): Unknown
-#ef09000c-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 34): Unknown
-#ef09000d-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 36): Unknown
-#ef090081-11d6-42ba-93b8-9dd7ec090aa9 (Handle: 40): Unknown
-#f000ffc5-0451-4000-b000-000000000000 (Handle: 49): Unknown
-#f000ffc2-0451-4000-b000-000000000000 (Handle: 46): Unknown
-#f000ffc1-0451-4000-b000-000000000000 (Handle: 43): Unknown
+UUID_32="ef09000b-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 32): Unknown
+UUID_34="ef09000c-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 34): Unknown
+UUID_36="ef09000d-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 36): Unknown
+UUID_40="ef090081-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 40): Unknown
+UUID_49="f000ffc5-0451-4000-b000-000000000000" # (Handle: 49): Unknown
+UUID_46="f000ffc2-0451-4000-b000-000000000000" # (Handle: 46): Unknown
+UUID_43="f000ffc1-0451-4000-b000-000000000000" # (Handle: 43): Unknown
 
 class Sample:
     ts_first = None

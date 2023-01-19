@@ -26,9 +26,6 @@ UUID_40="ef090081-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 40): Unknown
 #f000ffc2-0451-4000-b000-000000000000 (Handle: 46): Unknown
 #f000ffc1-0451-4000-b000-000000000000 (Handle: 43): Unknown
 
-
-
-
 async def main():
     #devices = await BleakScanner.discover()
     #for d in devices:
