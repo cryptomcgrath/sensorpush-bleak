@@ -1,6 +1,6 @@
 # pysensorpush-bleak
 
-Python library which uses gatttool to read temperature data from a Sensorpush HT.w temperature sensor.
+Python library which uses bleak to read temperature data from a Sensorpush HT.w temperature sensor.
 
 1. Find the mac address of your sensor:<br>
 ```
