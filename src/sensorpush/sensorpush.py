@@ -1,6 +1,8 @@
 from sensorpush import utils as ut
 from sensorpush import sensorpush_parser
 import asyncio
+from asyncio.exceptions import TimeoutError
+from bleak import BleakScanner
 
 STOP_TOKEN_B = b'\xff\xff\xff\xff'
 
@@ -39,7 +41,48 @@ class Sample:
        self.ts_first = ts_first
        self.temp_c = temp_c
        self_hum = hum
- 
+
+async def scan(device_count=1, timeout=30):
+    """
+    Scan for Bluetooth devices that contain the string 'SensorPush' in their
+    name
+
+    Args:
+      device_count : Wait for this may unique SensorPush devices to be discovered.
+      timeout : Stop scanning after this number of seconds
+
+    Retruns:
+      A list of Bleak devices (possibly empty). Each device will have properties: `address` and `name`
+    """
+    if device_count < 1:
+        device_count = 1
+
+    stop_event = asyncio.Event()
+
+    # we may get duplicate calls to device_discovered() for the same device
+    # so lets dedup with a dictinary
+    sensorpush_devices = {}
+
+    def device_discovered(device, advertising_data):
+        if device.name is None:
+            return
+
+        if 'SensorPush' not in device.name:
+            return
+
+        sensorpush_devices[device.address] = device
+
+        if len(sensorpush_devices) >= device_count:
+            stop_event.set()
+
+    try:
+        async with BleakScanner(device_discovered) as scanner:
+            await asyncio.wait_for(stop_event.wait(), timeout)
+    except TimeoutError as e:
+        return list(sensorpush_devices.values())
+
+    return list(sensorpush_devices.values())
+
 async def read_batt_info(client):
   """
   Reads the battery info and returns volts, rawTemp

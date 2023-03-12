@@ -1,5 +1,5 @@
 import asyncio
-from bleak import BleakScanner, BleakClient
+from bleak import BleakScanner, BleakClient, BleakError
 import utils as ut
 import sensorpush as sp
 
@@ -25,6 +25,29 @@ UUID_40="ef090081-11d6-42ba-93b8-9dd7ec090aa9" # (Handle: 40): Unknown
 #f000ffc5-0451-4000-b000-000000000000 (Handle: 49): Unknown
 #f000ffc2-0451-4000-b000-000000000000 (Handle: 46): Unknown
 #f000ffc1-0451-4000-b000-000000000000 (Handle: 43): Unknown
+
+async def test_scanner():
+    try:
+        print('Scanning...')
+        devices = await sp.scan()
+    except BleakError as e:
+        msg = str(e)
+        if 'BLE is not authorized' in msg:
+            # we don't have permission to access bluetooth
+            print(msg, file=sys.stderr)
+            return
+        else:
+            raise e
+
+    if len(devices) == 0:
+        print('no SensorPush devices found')
+        return
+
+    for d in devices:
+        print(f'Connecting to {d.address}...')
+        async with BleakClient(d.address) as client:
+            temp_c = await sp.read_temperature(client)
+            print(f'{d.address} temperature: {temp_c}')
 
 async def main():
     #devices = await BleakScanner.discover()
@@ -57,4 +80,10 @@ async def main():
             sample = samples[i]
             print("sample {} time={} temp_c={} hum={}".format(i, sample.ts_first, sample.temp_c, sample.hum))
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())
+
+    try:
+        asyncio.run(test_scanner())
+    except KeyboardInterrupt as e:
+        pass
